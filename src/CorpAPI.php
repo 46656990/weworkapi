@@ -680,21 +680,25 @@ class CorpAPI extends API
      * @throws QyApiError
      * @throws SysError
      */
-    public function BatchInvite(
-        $userIdList=null, $partyIdList=null, $tagIdList=null,
-        &$invalidUserIdList, &$invalidPartyIdList, &$invalidTagIdList)
-    {
-        if (is_null($userIdList) && is_null($partyIdList) && is_null($tagIdList)) {
-            echo ("input can not be all null");
-            return;
-        }
-        $args = array('user'=>$userIdList, 'party'=>$partyIdList, 'tag'=>$tagIdList);
+    public function BatchInvite( 
+    $userIdList=null, 
+    $partyIdList=null, 
+    $tagIdList=null, 
+    &$invalidUserIdList = [], // 默认值设为空数组，并移到必选参数之后（虽然这里都是可选，但为了语法规范）
+    &$invalidPartyIdList = [], 
+    &$invalidTagIdList = [] 
+    ) {
+        // 注意：PHP 8 要求可选参数必须在必选参数之后。原代码逻辑没有变，只是调整了参数位置。
+        if (is_null($userIdList) && is_null($partyIdList) && is_null($tagIdList)) { 
+            echo ("input can not be all null"); 
+            return; 
+        } 
+        $args = array('user'=>$userIdList, 'party'=>$partyIdList, 'tag'=>$tagIdList); 
         self::_HttpCall(self::BATCH_INVITE, 'POST', $args); 
-
-        $invalidUserIdList = Utils::arrayGet($this->rspJson, 'invaliduser');
-        $invalidPartyIdList = Utils::arrayGet($this->rspJson, 'invalidparty');
-        $invalidTagIdList = Utils::arrayGet($this->rspJson, 'invalidtag');
-    } 
+        $invalidUserIdList = Utils::arrayGet($this->rspJson, 'invaliduser'); 
+        $invalidPartyIdList = Utils::arrayGet($this->rspJson, 'invalidparty'); 
+        $invalidTagIdList = Utils::arrayGet($this->rspJson, 'invalidtag'); 
+    }
 
     //
     // ------------------------- 应用管理 --------------------------------------
@@ -821,28 +825,42 @@ class CorpAPI extends API
      * @throws QyApiError
      * @throws SysError
      */
-    public function MessageSend(Message $message, &$invalidUserIdList, &$invalidPartyIdList, &$invalidTagIdList)
-    {
+    public function MessageSend(
+    Message $message, 
+    &$invalidUserIdList = [], 
+    &$invalidPartyIdList = [], 
+    &$invalidTagIdList = []
+    ) { 
         $message->CheckMessageSendArgs(); 
-        $args = $message->Message2Array();
-
+        $args = $message->Message2Array(); 
         self::_HttpCall(self::MESSAGE_SEND, 'POST', $args); 
-
-        $invalidUserIdList_string = utils::arrayGet($this->rspJson, "invaliduser");
-        $invalidUserIdList = explode('|', $invalidUserIdList_string);
-
-        $invalidPartyIdList_string = utils::arrayGet($this->rspJson, "invalidparty");
-        $temp = explode('|', $invalidPartyIdList_string);
-        foreach($temp as $item) {
-            $invalidPartyIdList[] = intval($item);
+        
+        // 初始化变量防止未定义
+        $invalidUserIdList = [];
+        $invalidPartyIdList = [];
+        $invalidTagIdList = [];
+    
+        $invalidUserIdList_string = utils::arrayGet($this->rspJson, "invaliduser"); 
+        if ($invalidUserIdList_string) {
+            $invalidUserIdList = explode('|', $invalidUserIdList_string); 
         }
-
-        $invalidTagIdList_string = utils::arrayGet($this->rspJson, "invalidtag");
-        $temp = explode('|', $invalidTagIdList_string);
-        foreach($temp as $item) {
-            $invalidTagIdList[] = intval($item);
+        
+        $invalidPartyIdList_string = utils::arrayGet($this->rspJson, "invalidparty"); 
+        if ($invalidPartyIdList_string) {
+            $temp = explode('|', $invalidPartyIdList_string); 
+            foreach($temp as $item) { 
+                $invalidPartyIdList[] = intval($item); 
+            }
         }
-    } 
+        
+        $invalidTagIdList_string = utils::arrayGet($this->rspJson, "invalidtag"); 
+        if ($invalidTagIdList_string) {
+            $temp = explode('|', $invalidTagIdList_string); 
+            foreach($temp as $item) { 
+                $invalidTagIdList[] = intval($item); 
+            }
+        }
+    }
     //
     // --------------------------- 素材管理 -----------------------------------
     //
@@ -868,11 +886,7 @@ class CorpAPI extends API
         }
 
         // 兼容php5.3-5.6 curl模块的上传操作
-        if (class_exists('\CURLFile')) {
-            $args = array('media' => new CURLFile(realpath($filePath), 'application/octet-stream', basename($filePath)));
-        } else {
-            $args = array('media' => '@' . realpath($filePath));
-        }
+        $args = array('media' => new CURLFile(realpath($filePath), 'application/octet-stream', basename($filePath)));
 
         $url = HttpUtils::MakeUrl("/cgi-bin/media/upload?access_token=ACCESS_TOKEN&type={$type}");
         $this->_HttpPostParseToJson($url, $args, true, true/*isPostFile*/);
