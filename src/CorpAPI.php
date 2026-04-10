@@ -964,7 +964,7 @@ class CorpAPI extends API
             $args = array('media' => '@' . $filePath);//realpath($filePath));
         }
 
-        var_dump($args);
+        //var_dump($args);
 
         $url = HttpUtils::MakeUrl("/cgi-bin/media/uploadimg?access_token=ACCESS_TOKEN");
         if ($md5 != null) { 
