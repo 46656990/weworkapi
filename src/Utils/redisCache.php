@@ -70,7 +70,7 @@ class redisCache implements Cache
         return @serialize($value);
     }
 
-    private function unformatValue(bool $value)
+    private function unformatValue(string $value)
     {
         return @unserialize($value);
     }
